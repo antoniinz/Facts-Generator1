@@ -9,9 +9,9 @@
   --surface:   #16161f;
   --surface-2: #1e1e2a;
   --border:    rgba(255, 255, 255, 0.07);
-  --gold:      #c9a96e;
-  --gold-soft: rgba(201, 169, 110, 0.15);
-  --gold-glow: rgba(201, 169, 110, 0.35);
+  --gold: #76d4ff;
+  --gold-soft: rgb(33, 57, 69);
+  --gold-glow: rgb(26, 115, 154);
   --text:      #f0ece4;
   --text-muted:#9994a8;
   --radius:    20px;
@@ -264,8 +264,8 @@ body {
 }
 
 .btn-primary:hover {
-  background: #d9b97e;
-  box-shadow: 0 6px 28px rgba(201,169,110,0.5);
+  background: #94dbff;
+  box-shadow: 0 6px 28px rgb(26, 115, 154);
   transform: translateY(-1px);
 }
 
