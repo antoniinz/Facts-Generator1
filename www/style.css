@@ -21,6 +21,10 @@
 /* ── Reset & Base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+* {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="6" width="6"><circle cx="3" cy="3" r="3" fill="white"/></svg>') 3 3, auto !important;
+}
+
 html { font-size: 16px; scroll-behavior: smooth; }
 
 body {
