@@ -165,3 +165,11 @@ const showToast = (message, duration = 3000) => {
     toast.classList.remove('show');
   }, duration);
 };
+
+
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js');
+  });
+}

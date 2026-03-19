@@ -1,6 +1,6 @@
 # Did You Know That?
 
-**Did You Know That?** is a simple mobile-first web app built with **HTML, CSS, and vanilla JavaScript**. It displays a random fact as soon as you open it, using the :contentReference[oaicite:0]{index=0}.
+**Did You Know That?** is a simple PWA built with **HTML, CSS, and vanilla JavaScript**. It displays a random fact as soon as you open it.
 
 ## Features
 - Shows a random fact on load
