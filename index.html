@@ -10,54 +10,107 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#ffffff">
+  <link rel="manifest" href="manifest.json" />
 </head>
 <body>
 
-  <div class="bg-orbs" aria-hidden="true">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
+<div class="bg-orbs" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<!-- ── Discover Tab ── -->
+<main class="container tab-panel active" id="tab-discover">
+
+  <header class="header">
+    <div class="eyebrow">✦ Random Knowledge ✦</div>
+    <h1 class="title">
+      Did you<br />
+      <em>know that?</em>
+    </h1>
+  </header>
+
+  <section class="card-wrapper" aria-live="polite" aria-atomic="true">
+    <div class="card" id="factCard">
+      <div class="card-inner">
+        <div class="loader" id="loader" aria-label="Loading fact…">
+          <span></span><span></span><span></span>
+        </div>
+        <p class="fact-text" id="factText"></p>
+      </div>
+      <!-- Favorite button inside card -->
+      <button class="fav-btn" id="favBtn" aria-label="Save to favorites" disabled>
+        <svg class="fav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.27 2 8.5
+                     2 5.41 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.08
+                     C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.41 22 8.5
+                     c0 3.77-3.4 6.86-8.55 11.53L12 21.35z"/>
+        </svg>
+      </button>
+      <div class="card-glint" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="generateBtn" aria-label="Generate a new fact">
+      <span class="btn-icon">⟳</span>
+      <span>New Fact</span>
+    </button>
+    <button class="btn btn-secondary" id="shareBtn" aria-label="Share this fact" disabled>
+      <span class="btn-icon">↑</span>
+      <span>Share</span>
+    </button>
   </div>
 
-  <main class="container">
+  <p class="toast" id="toast" role="status" aria-live="polite"></p>
 
-    <header class="header">
-      <div class="eyebrow">✦ Random Knowledge ✦</div>
-      <h1 class="title">
-        Did you<br />
-        <em>know that?</em>
-      </h1>
-    </header>
+</main>
 
-    <section class="card-wrapper" aria-live="polite" aria-atomic="true">
-      <div class="card" id="factCard">
-        <div class="card-inner">
-          <div class="loader" id="loader" aria-label="Loading fact…">
-            <span></span><span></span><span></span>
-          </div>
-          <p class="fact-text" id="factText"></p>
-        </div>
-        <div class="card-glint" aria-hidden="true"></div>
-      </div>
-    </section>
+<!-- ── Favorites Tab ── -->
+<main class="container tab-panel" id="tab-favorites">
 
-    <div class="actions">
-      <button class="btn btn-primary" id="generateBtn" aria-label="Generate a new fact">
-        <span class="btn-icon">⟳</span>
-        <span>New Fact</span>
-      </button>
-      <button class="btn btn-secondary" id="shareBtn" aria-label="Share this fact" disabled>
-        <span class="btn-icon">↑</span>
-        <span>Share</span>
-      </button>
-    </div>
+  <header class="header">
+    <div class="eyebrow">✦ Saved Facts ✦</div>
+    <h1 class="title fav-title">
+      Your<br />
+      <em>favorites</em>
+    </h1>
+  </header>
 
-    <p class="toast" id="toast" role="status" aria-live="polite"></p>
+  <section class="fav-list" id="favList" aria-live="polite">
+    <!-- Populated by JS -->
+  </section>
 
-  </main>
+  <div class="fav-empty" id="favEmpty">
+    <div class="fav-empty-icon">♡</div>
+    <p>No favorites yet.<br/>Tap the heart on a fact to save it.</p>
+  </div>
 
-  <script src="app.js"></script>
+</main>
+
+<!-- ── Bottom Tab Bar ── -->
+<nav class="tab-bar" role="tablist" aria-label="App sections">
+  <button class="tab-bar-item active" id="tabBtnDiscover" role="tab" aria-selected="true" aria-controls="tab-discover">
+    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    <span>Discover</span>
+  </button>
+  <button class="tab-bar-item" id="tabBtnFavorites" role="tab" aria-selected="false" aria-controls="tab-favorites">
+    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.27 2 8.5
+                 2 5.41 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.08
+                 C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.41 22 8.5
+                 c0 3.77-3.4 6.86-8.55 11.53L12 21.35z"
+            stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+    </svg>
+    <span>Favorites</span>
+    <span class="tab-badge" id="favBadge" aria-label="favorites count"></span>
+  </button>
+</nav>
+
+<script src="app.js"></script>
 </body>
 </html>

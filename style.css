@@ -1,6 +1,6 @@
 /* ============================================================
    Did You Know That? — style.css
-   Aesthetic: Dark editorial luxury with warm gold accents
+   Aesthetic: Dark editorial luxury with cyan-blue accents
    ============================================================ */
 
 /* ── Variables ── */
@@ -9,13 +9,14 @@
   --surface:   #16161f;
   --surface-2: #1e1e2a;
   --border:    rgba(255, 255, 255, 0.07);
-  --gold: #76d4ff;
+  --gold:      #76d4ff;
   --gold-soft: rgb(33, 57, 69);
   --gold-glow: rgb(26, 115, 154);
   --text:      #f0ece4;
   --text-muted:#9994a8;
   --radius:    20px;
   --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  --tab-bar-h: 68px;
 }
 
 /* ── Reset & Base ── */
@@ -32,11 +33,8 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   overflow-x: hidden;
-  padding: 1.5rem;
+  padding-bottom: var(--tab-bar-h);
 }
 
 /* ── Background Orbs ── */
@@ -73,7 +71,7 @@ body {
 
 .orb-3 {
   width: 280px; height: 280px;
-  background: radial-gradient(circle, rgba(201,169,110,0.12) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(118, 212, 255, 0.08) 0%, transparent 70%);
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   animation-duration: 25s;
@@ -85,16 +83,32 @@ body {
   to   { transform: translate(40px, 30px) scale(1.08); }
 }
 
+/* ── Tab Panels ── */
+.tab-panel {
+  display: none;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.tab-panel.active {
+  display: flex;
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* ── Layout ── */
 .container {
   position: relative;
   z-index: 1;
   width: 100%;
   max-width: 480px;
-  display: flex;
+  margin: 0 auto;
   flex-direction: column;
   align-items: center;
   gap: 2.25rem;
+  padding: 2rem 1.5rem 1.5rem;
+  min-height: calc(100dvh - var(--tab-bar-h));
 }
 
 /* ── Header ── */
@@ -140,16 +154,16 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 2rem 1.75rem;
+  padding: 2rem 1.75rem 2rem;
   min-height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   box-shadow:
-    0 2px 0 0 rgba(255,255,255,0.04) inset,
-    0 24px 60px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(0,0,0,0.3);
+          0 2px 0 0 rgba(255,255,255,0.04) inset,
+          0 24px 60px rgba(0, 0, 0, 0.5),
+          0 0 0 1px rgba(0,0,0,0.3);
   transition: box-shadow var(--transition);
 }
 
@@ -158,7 +172,7 @@ body {
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(201,169,110,0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(118, 212, 255, 0.35), transparent);
 }
 
 .card-inner {
@@ -167,6 +181,8 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 120px;
+  /* leave room for fav btn at bottom-right */
+  padding-bottom: 1.75rem;
 }
 
 /* Glint sweep on hover */
@@ -179,6 +195,46 @@ body {
   pointer-events: none;
 }
 .card:hover .card-glint { left: 160%; }
+
+/* ── Favorite Button (inside card) ── */
+.fav-btn {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 0.9rem;
+  background: none;
+  border: none;
+  padding: 0.3rem;
+  line-height: 0;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+  z-index: 2;
+}
+
+.fav-btn:disabled { opacity: 0.3; pointer-events: none; }
+
+.fav-icon {
+  width: 22px; height: 22px;
+  stroke: var(--text-muted);
+  fill: none;
+  stroke-width: 1.8;
+  transition: stroke 0.2s ease, fill 0.2s ease;
+}
+
+.fav-btn.saved .fav-icon {
+  stroke: #ff6b8a;
+  fill: #ff6b8a;
+}
+
+.fav-btn:not(:disabled):hover { transform: scale(1.25); }
+.fav-btn:not(:disabled):active { transform: scale(0.9); }
+
+/* Pop animation when favorited */
+@keyframes heart-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.5); }
+  70%  { transform: scale(0.88); }
+  100% { transform: scale(1); }
+}
+.fav-btn.pop { animation: heart-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
 /* ── Fact Text ── */
 .fact-text {
@@ -318,10 +374,191 @@ body {
   transform: translateY(0);
 }
 
+/* ═══════════════════════════════════════
+   FAVORITES TAB
+═══════════════════════════════════════ */
+
+.fav-title { }
+
+/* List of saved fact cards */
+.fav-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Individual favorite card */
+.fav-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.35rem 3.5rem 1.35rem 1.5rem;
+  box-shadow:
+          0 2px 0 0 rgba(255,255,255,0.03) inset,
+          0 8px 30px rgba(0,0,0,0.35);
+  animation: card-in 0.35s cubic-bezier(0.4,0,0.2,1) both;
+  overflow: hidden;
+}
+
+.fav-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(118, 212, 255, 0.2), transparent);
+}
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fav-card-text {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 300;
+  line-height: 1.65;
+  color: var(--text);
+}
+
+/* Remove from favorites button */
+.fav-remove-btn {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  line-height: 0;
+  opacity: 0.45;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fav-remove-btn:hover { opacity: 1; transform: scale(1.15); }
+.fav-remove-btn:active { transform: scale(0.88); }
+
+.fav-remove-icon {
+  width: 18px; height: 18px;
+  stroke: #ff6b8a;
+  fill: #ff6b8a;
+}
+
+/* Empty state */
+.fav-empty {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.fav-empty.visible { display: flex; }
+
+.fav-empty-icon {
+  font-size: 3rem;
+  line-height: 1;
+  opacity: 0.3;
+  color: var(--text);
+}
+
+.fav-empty p {
+  font-size: 0.95rem;
+  font-weight: 300;
+  line-height: 1.65;
+}
+
+/* ═══════════════════════════════════════
+   BOTTOM TAB BAR
+═══════════════════════════════════════ */
+
+.tab-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: var(--tab-bar-h);
+  background: rgba(13, 13, 20, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: stretch;
+  z-index: 100;
+  /* Safe area for notched phones */
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.tab-bar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: color var(--transition);
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  padding-top: 2px;
+}
+
+.tab-bar-item.active { color: var(--gold); }
+
+.tab-icon {
+  width: 22px; height: 22px;
+  stroke: currentColor;
+  fill: none;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tab-bar-item.active .tab-icon { transform: scale(1.12); }
+
+/* Active indicator line at top of tab bar */
+.tab-bar-item::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 32px; height: 2px;
+  background: var(--gold);
+  border-radius: 0 0 2px 2px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tab-bar-item.active::before { transform: translateX(-50%) scaleX(1); }
+
+/* Badge (count) */
+.tab-badge {
+  position: absolute;
+  top: 6px; right: calc(50% - 18px);
+  min-width: 16px; height: 16px;
+  background: #ff6b8a;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  border-radius: 99px;
+  padding: 0 4px;
+  display: none;
+  letter-spacing: 0;
+}
+
+.tab-badge.visible { display: block; }
+
 /* ── Responsive ── */
 @media (min-width: 480px) {
-  body { padding: 2rem; }
-  .card { padding: 2.5rem 2.25rem; }
+  .container { padding: 2.5rem 2rem 2rem; }
+  .card { padding: 2.5rem 2.25rem 2.25rem; }
 }
 
 @media (min-width: 768px) {
