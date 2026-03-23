@@ -101,17 +101,18 @@ const handleGenerate = () => {
 const handleShare = async () => {
   if (!currentFact) return;
 
+  const message = `Did you know that? "${currentFact}"\n\nhttps://facts-generator-zapletal.netlify.app/`;
+
   const shareData = {
     title: 'Did You Know That?',
-    text: currentFact,
-    url: window.location.href,
+    text: message,
+    url: 'https://facts-generator-zapletal.netlify.app/',
   };
 
   if (navigator.share) {
     try {
       await navigator.share(shareData);
     } catch (err) {
-      // User cancelled — not an error worth surfacing
       if (err.name !== 'AbortError') {
         console.warn('Share failed:', err);
       }
@@ -119,7 +120,7 @@ const handleShare = async () => {
   } else {
     // Fallback: copy to clipboard
     try {
-      await navigator.clipboard.writeText(currentFact);
+      await navigator.clipboard.writeText(message);
       showToast('Fact copied to clipboard!');
     } catch (err) {
       console.error('Clipboard write failed:', err);
