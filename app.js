@@ -1,133 +1,153 @@
 /* ============================================================
    Did You Know That? — app.js
-   All application logic lives here.
+   Celá logika aplikace je tady.
    ============================================================ */
 
-const API_URL    = 'https://api.api-ninjas.com/v1/facts';
-const API_KEY    = '2XEi9vKcFzPJOit1TptpNxQUhD8HHxVYNA8fZ4sZ';
-const LS_LAST    = 'didyouknow_last_fact';
-const LS_FAVS    = 'didyouknow_favorites';
+// URL adresa externího API, které vrací zajímavé fakty
+const API_URL = 'https://api.api-ninjas.com/v1/facts';
+// Tajný klíč pro přístup k API (každý vývojář má svůj vlastní)
+const API_KEY = '2XEi9vKcFzPJOit1TptpNxQUhD8HHxVYNA8fZ4sZ';
+// Klíč pro uložení posledního zobrazeného faktu do paměti prohlížeče
+const LS_LAST = 'didyouknow_last_fact';
+// Klíč pro uložení oblíbených faktů do paměti prohlížeče
+const LS_FAVS = 'didyouknow_favorites';
 
-/* ── DOM References ── */
+/* ── Odkazy na prvky v HTML stránce ── */
+// Tyto proměnné budou odkazovat na konkrétní tlačítka, texty atd. na stránce
 let factText, loader, generateBtn, shareBtn, favBtn, toast;
 let tabBtnDiscover, tabBtnFavorites;
 let panelDiscover, panelFavorites;
 let favList, favEmpty, favBadge;
 
-/* ── State ── */
+/* ── Stav aplikace ── */
+// Aktuálně zobrazený fakt (text)
 let currentFact = '';
-let toastTimer  = null;
+// Časovač pro upozornění (toast notifikace)
+let toastTimer = null;
 
 /* ════════════════════════════════════════
-   BOOT
+   SPUŠTĚNÍ APLIKACE
+   Tato funkce se spustí automaticky hned po načtení stránky v prohlížeči.
 ════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
-  // Discover
-  factText    = document.getElementById('factText');
-  loader      = document.getElementById('loader');
-  generateBtn = document.getElementById('generateBtn');
-  shareBtn    = document.getElementById('shareBtn');
-  favBtn      = document.getElementById('favBtn');
-  toast       = document.getElementById('toast');
+  // Načteme si odkazy na všechny důležité prvky na stránce podle jejich HTML id
+  factText    = document.getElementById('factText');    // Prvek kde se zobrazuje text faktu
+  loader      = document.getElementById('loader');      // Animace načítání (točící se kolečko)
+  generateBtn = document.getElementById('generateBtn'); // Tlačítko "Vygenerovat nový fakt"
+  shareBtn    = document.getElementById('shareBtn');    // Tlačítko "Sdílet"
+  favBtn      = document.getElementById('favBtn');      // Tlačítko srdce (oblíbené)
+  toast       = document.getElementById('toast');       // Dočasná zpráva (např. "Uloženo!")
 
-  // Tabs
+  // Záložky (Discover / Favorites)
   tabBtnDiscover  = document.getElementById('tabBtnDiscover');
   tabBtnFavorites = document.getElementById('tabBtnFavorites');
-  panelDiscover   = document.getElementById('tab-discover');
-  panelFavorites  = document.getElementById('tab-favorites');
+  panelDiscover   = document.getElementById('tab-discover');   // Obsah záložky Discover
+  panelFavorites  = document.getElementById('tab-favorites');  // Obsah záložky Favorites
 
-  // Favorites
-  favList  = document.getElementById('favList');
-  favEmpty = document.getElementById('favEmpty');
-  favBadge = document.getElementById('favBadge');
+  // Prvky v záložce oblíbených
+  favList  = document.getElementById('favList');   // Seznam oblíbených faktů
+  favEmpty = document.getElementById('favEmpty'); // Zpráva "Zatím žádné oblíbené"
+  favBadge = document.getElementById('favBadge'); // Číslo (počet oblíbených) na ikoně záložky
 
-  // Event listeners
-  generateBtn.addEventListener('click', handleGenerate);
-  shareBtn.addEventListener('click', handleShare);
-  favBtn.addEventListener('click', handleFavoriteToggle);
-  tabBtnDiscover.addEventListener('click', () => switchTab('discover'));
-  tabBtnFavorites.addEventListener('click', () => switchTab('favorites'));
+  // Přiřadíme funkce k tlačítkům – co se stane po kliknutí
+  generateBtn.addEventListener('click', handleGenerate);         // Klik → načti nový fakt
+  shareBtn.addEventListener('click', handleShare);               // Klik → sdílej fakt
+  favBtn.addEventListener('click', handleFavoriteToggle);        // Klik → přidej/odeber z oblíbených
+  tabBtnDiscover.addEventListener('click', () => switchTab('discover'));    // Přepni na záložku Discover
+  tabBtnFavorites.addEventListener('click', () => switchTab('favorites'));  // Přepni na záložku Favorites
 
-  // Init
+  // Aktualizujeme číslo na ikoně záložky oblíbených
   updateBadge();
 
+  // Zkusíme načíst naposledy zobrazený fakt z paměti prohlížeče
   const saved = loadLastFact();
   if (saved) {
+    // Pokud existuje uložený fakt, zobrazíme ho rovnou (bez volání API)
     displayFact(saved);
   } else {
+    // Pokud nic uloženo není, stáhneme nový fakt z internetu
     fetchFact();
   }
 });
 
 /* ════════════════════════════════════════
-   TAB SWITCHING
+   PŘEPÍNÁNÍ ZÁLOŽEK
 ════════════════════════════════════════ */
 const switchTab = (tab) => {
-  const isDiscover = tab === 'discover';
+  const isDiscover = tab === 'discover'; // Je aktivní záložka "Discover"?
 
-  // Panels
+  // Zobrazíme/skryjeme příslušné panely (přidáme/odebereme třídu "active")
   panelDiscover.classList.toggle('active', isDiscover);
   panelFavorites.classList.toggle('active', !isDiscover);
 
-  // Tab buttons
+  // Zvýrazníme aktivní tlačítko záložky
   tabBtnDiscover.classList.toggle('active', isDiscover);
-  tabBtnDiscover.setAttribute('aria-selected', isDiscover);
+  tabBtnDiscover.setAttribute('aria-selected', isDiscover);     // Pro čtečky obrazovky
   tabBtnFavorites.classList.toggle('active', !isDiscover);
   tabBtnFavorites.setAttribute('aria-selected', !isDiscover);
 
+  // Pokud jsme přepnuli na Favorites, překreslíme seznam oblíbených
   if (!isDiscover) renderFavorites();
 };
 
 /* ════════════════════════════════════════
-   FETCH
+   STAHOVÁNÍ FAKTU Z API
 ════════════════════════════════════════ */
 const fetchFact = async () => {
-  setLoadingState(true);
+  setLoadingState(true); // Zapneme animaci načítání a zablokujeme tlačítka
 
   try {
+    // Pošleme požadavek na server API (jako když napíšete URL do prohlížeče, ale programově)
     const response = await fetch(API_URL, {
-      method: 'GET',
-      headers: { 'X-Api-Key': API_KEY },
+      method: 'GET',                          // Typ požadavku: čtení dat
+      headers: { 'X-Api-Key': API_KEY },      // Přiložíme tajný klíč pro ověření
     });
 
+    // Pokud server vrátil chybový kód (např. 401, 500), vyhodíme chybu
     if (!response.ok) throw new Error(`API error: ${response.status}`);
 
+    // Převedeme odpověď ze serveru z JSON formátu na JavaScript objekt
     const data = await response.json();
+    // Vytáhneme text faktu z odpovědi (je uložen jako první prvek pole)
     const fact = data?.[0]?.fact;
     if (!fact) throw new Error('No fact returned from API.');
 
+    // Uložíme fakt do paměti prohlížeče a zobrazíme ho
     saveLastFact(fact);
     displayFact(fact);
 
   } catch (err) {
+    // Pokud cokoliv selže, zapíšeme chybu do konzole a ukážeme uživateli zprávu
     console.error('Failed to fetch fact:', err);
     showToast('Couldn\'t load a fact. Check your API key or connection.');
-    setLoadingState(false);
+    setLoadingState(false); // Vypneme animaci načítání
   }
 };
 
 /* ════════════════════════════════════════
-   DISPLAY
+   ZOBRAZENÍ FAKTU NA STRÁNCE
 ════════════════════════════════════════ */
 const displayFact = (fact) => {
-  currentFact = fact;
-  factText.classList.remove('visible');
+  currentFact = fact;                        // Uložíme fakt jako aktuálně zobrazený
+  factText.classList.remove('visible');      // Skryjeme text (pro plynulou animaci)
 
+  // Počkáme 200ms a pak text plynule zobrazíme
   setTimeout(() => {
-    factText.textContent = fact;
-    setLoadingState(false);
-    factText.classList.add('visible');
-    shareBtn.disabled = false;
-    favBtn.disabled   = false;
-    syncFavButton();
+    factText.textContent = fact;             // Nastavíme text faktu
+    setLoadingState(false);                  // Vypneme animaci načítání
+    factText.classList.add('visible');       // Zobrazíme text s animací
+    shareBtn.disabled = false;               // Povolíme tlačítko sdílení
+    favBtn.disabled   = false;               // Povolíme tlačítko oblíbených
+    syncFavButton();                         // Aktualizujeme ikonu srdce (plné/prázdné)
   }, 200);
 };
 
 /* ════════════════════════════════════════
-   LOADING STATE
+   STAV NAČÍTÁNÍ (zapnout/vypnout)
 ════════════════════════════════════════ */
 const setLoadingState = (isLoading) => {
   if (isLoading) {
+    // Načítání ZAP: skryjeme fakt, ukážeme kolečko, zablokujeme tlačítka
     factText.classList.remove('visible');
     factText.textContent = '';
     loader.classList.add('active');
@@ -135,22 +155,27 @@ const setLoadingState = (isLoading) => {
     shareBtn.disabled    = true;
     favBtn.disabled      = true;
   } else {
+    // Načítání VYP: skryjeme kolečko, povolíme tlačítko generování
     loader.classList.remove('active');
     generateBtn.disabled = false;
   }
 };
 
 /* ════════════════════════════════════════
-   HANDLERS
+   OBSLUHA KLIKNUTÍ NA TLAČÍTKA
 ════════════════════════════════════════ */
+
+// Klik na "Nový fakt"
 const handleGenerate = () => {
-  triggerHaptic();
-  fetchFact();
+  triggerHaptic(); // Vibrační odezva na mobilu (pokud je dostupná)
+  fetchFact();     // Stáhni nový fakt
 };
 
+// Klik na "Sdílet"
 const handleShare = async () => {
-  if (!currentFact) return;
+  if (!currentFact) return; // Pokud není žádný fakt, nic nedělej
 
+  // Připravíme zprávu ke sdílení s textem faktu a odkazem na web
   const message = `Did you know that? "${currentFact}"\n\nhttps://facts-generator-zapletal.netlify.app/`;
   const shareData = {
     title: 'Did You Know That?',
@@ -159,12 +184,15 @@ const handleShare = async () => {
   };
 
   if (navigator.share) {
+    // Pokud prohlížeč/mobil podporuje nativní sdílení (systémové menu), použijeme ho
     try {
       await navigator.share(shareData);
     } catch (err) {
+      // Pokud uživatel sdílení zrušil (klikl "Zpět"), ignorujeme to
       if (err.name !== 'AbortError') console.warn('Share failed:', err);
     }
   } else {
+    // Na počítači nativní sdílení není → zkopírujeme text do schránky
     try {
       await navigator.clipboard.writeText(message);
       showToast('Fact copied to clipboard!');
@@ -175,88 +203,102 @@ const handleShare = async () => {
   }
 };
 
+// Klik na srdce (přidat/odebrat z oblíbených)
 const handleFavoriteToggle = () => {
-  if (!currentFact) return;
-  triggerHaptic();
+  if (!currentFact) return; // Pokud není žádný fakt, nic nedělej
+  triggerHaptic();           // Vibrační odezva
 
-  const favs    = loadFavorites();
-  const isSaved = favs.includes(currentFact);
+  const favs    = loadFavorites();               // Načteme seznam oblíbených
+  const isSaved = favs.includes(currentFact);    // Je aktuální fakt již oblíbený?
 
   if (isSaved) {
-    removeFavorite(currentFact);
+    removeFavorite(currentFact);      // Ano → odebereme ho
     showToast('Removed from favorites.');
   } else {
-    addFavorite(currentFact);
+    addFavorite(currentFact);         // Ne → přidáme ho
     showToast('Saved to favorites!');
   }
 
-  // Pop animation
+  // Spustíme animaci "pop" na tlačítku srdce
   favBtn.classList.remove('pop');
-  void favBtn.offsetWidth; // reflow to restart animation
+  void favBtn.offsetWidth; // Trik: vynutíme překreslení, aby se animace spustila znovu
   favBtn.classList.add('pop');
 
-  syncFavButton();
-  updateBadge();
+  syncFavButton();  // Aktualizujeme vzhled tlačítka (plné/prázdné srdce)
+  updateBadge();    // Aktualizujeme počítadlo na záložce
 };
 
 /* ════════════════════════════════════════
-   FAVORITES — CRUD
+   OBLÍBENÉ – OPERACE S DATY
 ════════════════════════════════════════ */
+
+// Načte seznam oblíbených faktů z localStorage (paměť prohlížeče)
 const loadFavorites = () => {
   try {
-    return JSON.parse(localStorage.getItem(LS_FAVS)) || [];
-  } catch (_) { return []; }
+    return JSON.parse(localStorage.getItem(LS_FAVS)) || []; // Vrátíme pole, nebo prázdné pole
+  } catch (_) { return []; } // Pokud je paměť nedostupná/poškozená, vrátíme prázdné pole
 };
 
+// Uloží celý seznam oblíbených do localStorage
 const saveFavorites = (favs) => {
   try {
-    localStorage.setItem(LS_FAVS, JSON.stringify(favs));
+    localStorage.setItem(LS_FAVS, JSON.stringify(favs)); // Převedeme pole na text a uložíme
   } catch (_) {}
 };
 
+// Přidá fakt na začátek seznamu oblíbených (nejnovější je první)
 const addFavorite = (fact) => {
   const favs = loadFavorites();
-  if (!favs.includes(fact)) {
-    favs.unshift(fact); // newest first
+  if (!favs.includes(fact)) {     // Přidáme jen pokud tam ještě není
+    favs.unshift(fact);           // unshift = vloží na začátek pole
     saveFavorites(favs);
   }
 };
 
+// Odebere konkrétní fakt ze seznamu oblíbených
 const removeFavorite = (fact) => {
-  const favs = loadFavorites().filter(f => f !== fact);
+  const favs = loadFavorites().filter(f => f !== fact); // Vytvoříme pole bez daného faktu
   saveFavorites(favs);
 };
 
 /* ════════════════════════════════════════
-   FAVORITES — UI
+   OBLÍBENÉ – ZOBRAZENÍ V UI
 ════════════════════════════════════════ */
+
+// Aktualizuje vzhled tlačítka srdce podle toho, zda je aktuální fakt oblíbený
 const syncFavButton = () => {
   if (!currentFact) return;
   const isSaved = loadFavorites().includes(currentFact);
-  favBtn.classList.toggle('saved', isSaved);
+  favBtn.classList.toggle('saved', isSaved); // Třída "saved" = plné srdce (červené)
   favBtn.setAttribute('aria-label', isSaved ? 'Remove from favorites' : 'Save to favorites');
 };
 
+// Aktualizuje číslo (badge) na záložce Favorites
 const updateBadge = () => {
   const count = loadFavorites().length;
+  // Zobrazíme počet (max. "99+"), nebo nic pokud je seznam prázdný
   favBadge.textContent = count > 0 ? (count > 99 ? '99+' : count) : '';
-  favBadge.classList.toggle('visible', count > 0);
+  favBadge.classList.toggle('visible', count > 0); // Schováme badge pokud je počet 0
 };
 
+// Překreslí celý seznam oblíbených faktů v záložce Favorites
 const renderFavorites = () => {
   const favs = loadFavorites();
-  favList.innerHTML = '';
+  favList.innerHTML = ''; // Smažeme starý seznam (začneme znovu)
 
   if (favs.length === 0) {
+    // Pokud je seznam prázdný, zobrazíme zprávu "Zatím žádné oblíbené"
     favEmpty.classList.add('visible');
     return;
   }
 
-  favEmpty.classList.remove('visible');
+  favEmpty.classList.remove('visible'); // Skryjeme prázdnou zprávu
 
+  // Pro každý oblíbený fakt vytvoříme kartu (HTML prvek)
   favs.forEach((fact) => {
-    const card = document.createElement('article');
+    const card = document.createElement('article'); // Nový HTML element <article>
     card.className = 'fav-card';
+    // Vložíme HTML s textem faktu a tlačítkem pro odebrání (srdce)
     card.innerHTML = `
       <p class="fav-card-text">${escapeHtml(fact)}</p>
       <button class="fav-remove-btn" aria-label="Remove from favorites">
@@ -269,58 +311,71 @@ const renderFavorites = () => {
       </button>
     `;
 
+    // Přidáme obsluhu kliknutí na tlačítko pro odebrání z oblíbených
     card.querySelector('.fav-remove-btn').addEventListener('click', () => {
       triggerHaptic();
-      removeFavorite(fact);
-      updateBadge();
-      // If this was the current displayed fact, re-sync the heart button
+      removeFavorite(fact);  // Odebereme fakt z oblíbených
+      updateBadge();         // Aktualizujeme počítadlo
+
+      // Pokud byl odebíraný fakt právě zobrazený, aktualizujeme srdce na hlavní stránce
       if (fact === currentFact) syncFavButton();
-      // Animate card out before removing
+
+      // Animace: karta se plynule vymizí (opacity → 0) a pak se celý seznam překreslí
       card.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
       card.style.opacity = '0';
       card.style.transform = 'translateX(12px)';
-      setTimeout(() => renderFavorites(), 260);
+      setTimeout(() => renderFavorites(), 260); // Po 260ms překreslíme seznam
     });
 
-    favList.appendChild(card);
+    favList.appendChild(card); // Přidáme kartu do seznamu na stránce
   });
 };
 
 /* ════════════════════════════════════════
-   LOCALSTORAGE — Last Fact
+   LOKÁLNÍ PAMĚŤ – Poslední fakt
 ════════════════════════════════════════ */
+
+// Uloží fakt do localStorage, aby přežil zavření prohlížeče
 const saveLastFact = (fact) => {
   try { localStorage.setItem(LS_LAST, fact); } catch (_) {}
 };
 
+// Načte poslední zobrazený fakt z localStorage
 const loadLastFact = () => {
   try { return localStorage.getItem(LS_LAST) || null; } catch (_) { return null; }
 };
 
 /* ════════════════════════════════════════
-   UTILS
+   POMOCNÉ FUNKCE
 ════════════════════════════════════════ */
+
+// Spustí vibrace na mobilním zařízení (jako hmatová odezva při kliknutí)
 const triggerHaptic = () => {
   if ('vibrate' in navigator) {
-    try { navigator.vibrate(40); } catch (_) {}
+    try { navigator.vibrate(40); } catch (_) {} // 40ms vibrací
   }
 };
 
+// Zobrazí dočasnou zprávu v dolní části obrazovky (tzv. toast notifikace)
 const showToast = (message, duration = 3000) => {
-  if (toastTimer) clearTimeout(toastTimer);
+  if (toastTimer) clearTimeout(toastTimer); // Zrušíme předchozí časovač (pokud existuje)
   toast.textContent = message;
-  toast.classList.add('show');
+  toast.classList.add('show');              // Zobrazíme zprávu
+  // Po 3 sekundách (výchozí) zprávu opět skryjeme
   toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
 };
 
-// Prevent XSS when injecting facts into innerHTML
+// Ochrana proti XSS útokům: převede speciální HTML znaky na bezpečné entity
+// Např. "<script>" se stane "&lt;script&gt;" a nezpustí se jako kód
 const escapeHtml = (str) => {
   const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+  div.textContent = str;   // Nastavíme jako prostý text (prohlížeč escapuje automaticky)
+  return div.innerHTML;    // Vrátíme bezpečnou HTML verzi
 };
 
-/* ── Service Worker ── */
+/* ── Service Worker (offline podpora) ── */
+// Zaregistrujeme Service Worker – soubor sw.js, který umožňuje fungování aplikace
+// i bez internetového připojení (ukládá stránku do cache prohlížeče)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js');
